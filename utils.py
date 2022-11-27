@@ -65,6 +65,8 @@ def load_data(
             # select data
             df = df[df['species'] == pathogen]
             df = df[(df[drug] == 'S') | (df[drug] == 'R')]
+            # drop NaN rows
+            df = df[['code', drug]].dropna()
 
             # X
             X.append(_load_bins(df, ds, yr))
