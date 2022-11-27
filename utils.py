@@ -6,7 +6,7 @@ from typing import Tuple
 
 def _load_bins(
         df: pd.DataFrame,
-        dataset='A',
+        site='A',
         year=2015,
 ) -> np.ndarray:
     """
@@ -14,8 +14,8 @@ def _load_bins(
 
     Args:
         df: source dataframe
-        dataset: DRIAMS datasets, can be 'A' | 'B' | 'C' | 'D'
-        year: the years of the datasets to load, can be 2015 | 2016 | 2017 | 2018
+        site: DRIAMS sites, can be 'A' | 'B' | 'C' | 'D'
+        year: the years of the sites to load, can be 2015 | 2016 | 2017 | 2018
 
     Returns:
         bins
@@ -24,7 +24,7 @@ def _load_bins(
 
     for code in df['code']:
         bins.append(np.loadtxt(
-            f'./archive/DRIAMS-{dataset}/binned_6000/{year}/{code}.txt',
+            f'./archive/DRIAMS-{site}/binned_6000/{year}/{code}.txt',
             skiprows=1,
             usecols=1,
         ))
@@ -35,17 +35,17 @@ def _load_bins(
 def load_data(
         pathogen='Escherichia coli',
         drug='Ceftriaxone',
-        datasets=['A'],
+        sites=['A'],
         years=[2015, 2016, 2017, 2018],
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Load and build dataset from `./archive/DRIAMS-{datasets}/id/{years}/{years}_clean.csv`
+    Load and build dataset from `./archive/DRIAMS-{sites}/id/{years}/{years}_clean.csv`
 
     Args:
         pathogen: target pathogen
         drug: target drug
-        datasets: DRIAMS datasets, can be any combination of ['A', 'B', 'C', 'D']
-        years: the years of the datasets to load, can be any combination of [2015, 2016, 2017, 2018]
+        sites: DRIAMS sites, can be any combination of ['A', 'B', 'C', 'D']
+        years: the years of the sites to load, can be any combination of [2015, 2016, 2017, 2018]
 
     Returns:
         X, y
@@ -53,7 +53,7 @@ def load_data(
     X = []
     y = []
 
-    for ds in datasets:
+    for ds in sites:
         for yr in years:
             csv_file = f'./archive/DRIAMS-{ds}/id/{yr}/{yr}_clean.csv'
 
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     kpn_X, kpn_y = load_data(
         pathogen='Klebsiella pneumoniae',
         drug='Ciprofloxacin',
-        datasets=['A', 'B', 'C', 'D'],
+        sites=['A', 'B', 'C', 'D'],
         years=[2015, 2016, 2017, 2018],
     )
 
