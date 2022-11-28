@@ -3,6 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from keras.models import Model
 from typing import Tuple, Dict
 from dataclasses import dataclass
 
@@ -56,6 +57,7 @@ class EvaluationResults:
                 title=drug,
                 legend=False,
                 width=0.9,
+                rot=0,
             )
             # add bar labels
             ax.bar_label(ax.containers[0], fmt='%.3f', padding=2, fontsize=8)
@@ -156,7 +158,7 @@ class EvaluationResults:
     @staticmethod
     def save_plot(filepath: str):
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        plt.savefig(filepath)
+        plt.savefig(filepath, facecolor='white')
 
     @staticmethod
     def _set_box_color(bp, color):
