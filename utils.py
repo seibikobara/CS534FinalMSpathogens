@@ -3,8 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from keras.models import Model
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 from dataclasses import dataclass
 
 
@@ -22,27 +21,36 @@ class EvaluationResults:
     base_results: Dict[str, pd.DataFrame]
     smote_results: Dict[str, pd.DataFrame]
 
-    def bar_plot(self, title: str, save_as: str = None, *args, **kwargs) -> None:
+    def bar_plot(
+            self,
+            title: str,
+            drugs: List[str] = None,
+            y_lim: Tuple[float, float] = None,
+            show: bool = True,
+            save_as: str = None,
+            *args,
+            **kwargs,
+    ) -> None:
         """
         Plot a bar graph
 
         Args:
             title: graph's title
+            drugs: list of drugs to plot
+            y_lim: view limits for y-axis
+            show: whether to display the image
             save_as: output file name
             *args, **kwargs: same as `plt.plot()`
-
-        Returns: None
         """
-        fig, axes = plt.subplots(*args, **kwargs)
+        fig, axes = self._subplots(len(self.base_results), *args, **kwargs)
         fig.suptitle(title)
 
-        # reshape axes to 2d array
-        if len(axes.shape) == 1:
-            axes = axes.reshape((1, -1))
+        if drugs is None:
+            drugs = list(self.base_results)
 
-        for i, drug in enumerate(self.base_results):
+        for i, drug in enumerate(drugs):
             # get the subplot
-            ax = axes[divmod(i, axes.shape[1])]
+            ax = axes[i]
             # get the dataframes
             df_base_med = self.base_results[drug].median()
             df_smote_med = self.smote_results[drug].median()
@@ -55,47 +63,59 @@ class EvaluationResults:
             df_plt.plot.bar(
                 ax=ax,
                 title=drug,
-                legend=False,
                 width=0.9,
                 rot=0,
+                legend=False,
             )
             # add bar labels
             ax.bar_label(ax.containers[0], fmt='%.3f', padding=2, fontsize=8)
             ax.bar_label(ax.containers[1], fmt='%.3f', padding=2, fontsize=8)
-            # add y label at the beginning of each row
-            if i % axes.shape[1] == 0:
-                ax.set_ylabel('Scores')
+            # add y label
+            ax.set_ylabel('Scores')
+            # set y limits
+            ax.set_ylim(y_lim)
 
         fig.legend(['Without SMOTE', 'With SMOTE'])
         self.save_plot(save_as)
-        plt.show()
 
-    def box_plot(self, title: str, save_as: str = None, *args, **kwargs) -> None:
+        if show:
+            plt.show()
+
+    def box_plot(
+            self,
+            title: str,
+            metrics: List[str] = None,
+            y_lim: Tuple[float, float] = None,
+            show: bool = True,
+            save_as: str = None,
+            *args,
+            **kwargs,
+    ) -> None:
         """
         Plot a box graph
 
         Args:
             title: graph's title
+            metrics: list of metrics to plot
+            y_lim: view limits for y-axis
+            show: whether to display the image
             save_as: output file name
             *args, **kwargs: same as `plt.plot()`
-
-        Returns: None
         """
         color_base = '#D7191C'
         color_smote = '#2C7BB6'
-        fig, axes = plt.subplots(*args, **kwargs)
-        fig.suptitle(title)
-
-        # reshape axes to 2d array
-        if len(axes.shape) == 1:
-            axes = axes.reshape((1, -1))
 
         drugs = list(self.base_results.keys())
-        metrics = self.base_results[drugs[0]].columns
+
+        if metrics is None:
+            metrics = self.base_results[drugs[0]].columns
+
+        fig, axes = self._subplots(len(metrics), *args, **kwargs)
+        fig.suptitle(title)
 
         for i, m in enumerate(metrics):
             # get the subplot
-            ax = axes[divmod(i, axes.shape[1])]
+            ax = axes[i]
             # get the scores
             scores_base = np.transpose([
                 self.base_results[d][m].to_numpy() for d in drugs
@@ -123,18 +143,22 @@ class EvaluationResults:
             # draw x-ticks
             ax.set_xticks(pos, drugs)
             ax.set_xlim(-2, scores_base.shape[1] * 2)
+            # set y limits
+            ax.set_ylim(y_lim)
             # set sub-fig's title
             ax.set_title(m)
-            # add y label at the beginning of each row
-            if i % axes.shape[1] == 0:
-                ax.set_ylabel('Scores')
+            # add y label
+            ax.set_ylabel('Scores')
 
         # draw temporary red and blue lines and use them to create a legend
-        axes[0, 0].plot([], c=color_base, label='Without SMOTE')
-        axes[0, 0].plot([], c=color_smote, label='With SMOTE')
+        axes[0].plot([], c=color_base, label='Without SMOTE')
+        axes[0].plot([], c=color_smote, label='With SMOTE')
         fig.legend()
+
         self.save_plot(save_as)
-        plt.show()
+
+        if show:
+            plt.show()
 
     def save_to(self, directory: str):
         """
@@ -159,6 +183,28 @@ class EvaluationResults:
     def save_plot(filepath: str):
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         plt.savefig(filepath, facecolor='white')
+
+    @staticmethod
+    def _subplots(count, *args, **kwargs):
+        fig, axes = plt.subplots(*args, **kwargs)
+
+        # wrap axes into ndarray
+        if not isinstance(axes, np.ndarray):
+            arr = np.zeros(1, dtype=object)
+            arr[0] = axes
+            axes = arr
+
+        # flatten
+        axes = axes.flatten()
+
+        # remove empty subplots
+        if len(axes) > count:
+            for ax in axes[count:]:
+                fig.delaxes(ax)
+
+            axes = axes[:count]
+
+        return fig, axes
 
     @staticmethod
     def _set_box_color(bp, color):
@@ -266,8 +312,8 @@ if __name__ == '__main__':
     )
 
     results.bar_plot(
-        nrows=1,
-        ncols=3,
+        nrows=2,
+        ncols=2,
         sharey=True,
         figsize=(12, 8),
         title='Bar Graph Test',
@@ -275,11 +321,8 @@ if __name__ == '__main__':
     )
 
     results.box_plot(
-        nrows=1,
-        ncols=3,
-        sharey=True,
-        figsize=(16, 5),
         title='Box Graph Test',
+        metrics=['AUROC'],
         save_as='./plots/box_test.png',
     )
 
