@@ -30,8 +30,8 @@ class Trainer:
         Args:
             pathogen: target pathogen
             n_splits: the number of folds
-            site: DRIAMS sites, can be 'A' | 'B' | 'C' | 'D'
-            year: the years of the data to load, can be 2015 | 2016 | 2017 | 2018
+            sites: DRIAMS sites, can be 'A' | 'B' | 'C' | 'D'
+            years: the years of the data to load, can be 2015 | 2016 | 2017 | 2018
         """
         self.pathogen = pathogen
         self.n_splits = n_splits
