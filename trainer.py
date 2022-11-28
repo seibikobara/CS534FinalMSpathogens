@@ -97,7 +97,7 @@ class Trainer:
         i = 0
 
         for train_index, test_index in skf.split(X, y):
-            print(f'Fold {i}/{self.n_splits}...')
+            print(f'Fold {i + 1}/{self.n_splits}...')
             i += 1
             X_train, X_test = X[train_index], X[test_index]
             y_train, y_test = y[train_index], y[test_index]
