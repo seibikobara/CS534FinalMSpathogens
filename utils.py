@@ -23,7 +23,8 @@ class EvaluationResults:
 
     def bar_plot(
             self,
-            title: str,
+            title: str = None,
+            subtitle_template: str = None,
             drugs: List[str] = None,
             metrics: List[str] = None,
             y_lim: Tuple[float, float] = None,
@@ -37,6 +38,7 @@ class EvaluationResults:
 
         Args:
             title: graph's title
+            subtitle_template: template string to format subtitles
             drugs: list of drugs to plot, set to `None` to plot all drugs
             metrics: list of metrics to plot, set to `None` to plot all metrics
             y_lim: view limits for y-axis
@@ -46,6 +48,9 @@ class EvaluationResults:
         """
         fig, axes = self._subplots(len(self.base_results), *args, **kwargs)
         fig.suptitle(title)
+
+        if subtitle_template is None:
+            subtitle_template = '{}'
 
         if drugs is None:
             drugs = list(self.base_results)
@@ -67,7 +72,7 @@ class EvaluationResults:
             # plot
             df_plt.plot.bar(
                 ax=ax,
-                title=drug,
+                title=subtitle_template.format(drug),
                 width=0.9,
                 rot=0,
                 legend=False,
@@ -91,7 +96,8 @@ class EvaluationResults:
 
     def box_plot(
             self,
-            title: str,
+            title: str = None,
+            subtitle_template: str = None,
             drugs: List[str] = None,
             metrics: List[str] = None,
             y_lim: Tuple[float, float] = None,
@@ -105,6 +111,7 @@ class EvaluationResults:
 
         Args:
             title: graph's title
+            subtitle_template: template string to format subtitles
             drugs: list of drugs to plot, set to `None` to plot all drugs
             metrics: list of metrics to plot, set to `None` to plot all metrics
             y_lim: view limits for y-axis
@@ -114,6 +121,9 @@ class EvaluationResults:
         """
         color_base = '#D7191C'
         color_smote = '#2C7BB6'
+
+        if subtitle_template is None:
+            subtitle_template = '{}'
 
         if drugs is None:
             drugs = list(self.base_results)
@@ -157,7 +167,7 @@ class EvaluationResults:
             # set y limits
             ax.set_ylim(y_lim)
             # set sub-fig's title
-            ax.set_title(m)
+            ax.set_title(subtitle_template.format(m))
             # add y label
             ax.set_ylabel('Scores')
 
@@ -338,10 +348,11 @@ if __name__ == '__main__':
         title='Bar Graph Test',
         save_as='./plots/bar_test.png',
         metrics=['AUROC', 'F1 Score'],
+        y_lim=(0, 1),
     )
 
     results.box_plot(
-        title='Box Graph Test',
+        subtitle_template='10-Fold {} Scores',
         metrics=['AUROC'],
         save_as='./plots/box_test.png',
     )
