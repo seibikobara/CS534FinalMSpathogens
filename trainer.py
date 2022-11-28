@@ -5,7 +5,10 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 from copy import deepcopy
 from utils import load_data, EvaluationResults
-from typing import Dict, List, Any
+from typing import Dict, List, Tuple, Any, TypeVar
+
+
+T = TypeVar('T')
 
 
 class Trainer:
@@ -40,13 +43,16 @@ class Trainer:
         self.base_results = {}
         self.smote_results = {}
 
-    def fit(self, drug: str, model: Any) -> None:
+    def fit(self, drug: str, model: T) -> Tuple[T, T]:
         """
         Fit the model to the specified drug dataset
 
         Args:
             drug: name of the drug
             model: model to fit
+
+        Returns:
+            (fitted model w/o SMOTE, fitted model w/ SMOTE)
         """
         print(f'Loading {drug}...')
 
@@ -58,9 +64,13 @@ class Trainer:
         )
 
         print('Training w/o SMOTE...')
-        self.base_results[drug] = self._train_and_eval(X, y, model, False)
+        base_model, base_res = self._train_and_eval(X, y, model, False)
+        self.base_results[drug] = base_res
         print('Training w/ SMOTE...')
-        self.smote_results[drug] = self._train_and_eval(X, y, model, True)
+        smote_model, smote_res = self._train_and_eval(X, y, model, True)
+        self.smote_results[drug] = smote_res
+
+        return base_model, smote_model
 
     def collect_results(self) -> EvaluationResults:
         """
@@ -72,7 +82,13 @@ class Trainer:
         """
         return EvaluationResults(self.base_results, self.smote_results)
 
-    def _train_and_eval(self, X: np.ndarray, y: np.ndarray, model: Any, use_smote=False) -> pd.DataFrame:
+    def _train_and_eval(
+            self,
+            X: np.ndarray,
+            y: np.ndarray,
+            model: T,
+            use_smote=False,
+    ) -> Tuple[T, pd.DataFrame]:
         """
         Train and evaluate the model
 
@@ -116,5 +132,5 @@ class Trainer:
             results['F1 Score'].append(f1)
             print(f'AUC={auc}, ACC={acc}, f1={f1}')
 
-        return pd.DataFrame(results)
+        return model, pd.DataFrame(results)
 
