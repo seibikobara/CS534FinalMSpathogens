@@ -75,7 +75,10 @@ class EvaluationResults:
             # set y limits
             ax.set_ylim(y_lim)
 
-        fig.legend(['Without SMOTE', 'With SMOTE'])
+        # draw legend
+        legend_target = axes[0] if len(axes) == 1 else fig
+        legend_target.legend(['Without SMOTE', 'With SMOTE'])
+
         self.save_plot(save_as)
 
         if show:
@@ -153,7 +156,10 @@ class EvaluationResults:
         # draw temporary red and blue lines and use them to create a legend
         axes[0].plot([], c=color_base, label='Without SMOTE')
         axes[0].plot([], c=color_smote, label='With SMOTE')
-        fig.legend()
+
+        # draw legend
+        legend_target = axes[0] if len(axes) == 1 else fig
+        legend_target.legend()
 
         self.save_plot(save_as)
 
