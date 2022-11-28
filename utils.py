@@ -169,6 +169,9 @@ class EvaluationResults:
 
         Returns: None
         """
+        if directory is None:
+            return
+
         os.makedirs(directory, exist_ok=True)
 
         for drug in self.base_results:
@@ -181,6 +184,8 @@ class EvaluationResults:
 
     @staticmethod
     def save_plot(filepath: str):
+        if filepath is None:
+            return
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         plt.savefig(filepath, facecolor='white')
 
