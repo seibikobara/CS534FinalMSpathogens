@@ -25,6 +25,7 @@ class EvaluationResults:
             self,
             title: str,
             drugs: List[str] = None,
+            metrics: List[str] = None,
             y_lim: Tuple[float, float] = None,
             show: bool = True,
             save_as: str = None,
@@ -36,7 +37,8 @@ class EvaluationResults:
 
         Args:
             title: graph's title
-            drugs: list of drugs to plot
+            drugs: list of drugs to plot, set to `None` to plot all drugs
+            metrics: list of metrics to plot, set to `None` to plot all metrics
             y_lim: view limits for y-axis
             show: whether to display the image
             save_as: output file name
@@ -48,6 +50,9 @@ class EvaluationResults:
         if drugs is None:
             drugs = list(self.base_results)
 
+        if metrics is None:
+            metrics = self.base_results[drugs[0]].columns
+
         for i, drug in enumerate(drugs):
             # get the subplot
             ax = axes[i]
@@ -56,8 +61,8 @@ class EvaluationResults:
             df_smote_med = self.smote_results[drug].median()
             # create plotting dataframe
             df_plt = pd.DataFrame({
-                'Without SMOTE': df_base_med,
-                'With SMOTE': df_smote_med,
+                'Without SMOTE': df_base_med[metrics],
+                'With SMOTE': df_smote_med[metrics],
             })
             # plot
             df_plt.plot.bar(
@@ -87,6 +92,7 @@ class EvaluationResults:
     def box_plot(
             self,
             title: str,
+            drugs: List[str] = None,
             metrics: List[str] = None,
             y_lim: Tuple[float, float] = None,
             show: bool = True,
@@ -99,7 +105,8 @@ class EvaluationResults:
 
         Args:
             title: graph's title
-            metrics: list of metrics to plot
+            drugs: list of drugs to plot, set to `None` to plot all drugs
+            metrics: list of metrics to plot, set to `None` to plot all metrics
             y_lim: view limits for y-axis
             show: whether to display the image
             save_as: output file name
@@ -108,7 +115,8 @@ class EvaluationResults:
         color_base = '#D7191C'
         color_smote = '#2C7BB6'
 
-        drugs = list(self.base_results.keys())
+        if drugs is None:
+            drugs = list(self.base_results)
 
         if metrics is None:
             metrics = self.base_results[drugs[0]].columns
@@ -329,6 +337,7 @@ if __name__ == '__main__':
         figsize=(12, 8),
         title='Bar Graph Test',
         save_as='./plots/bar_test.png',
+        metrics=['AUROC', 'F1 Score'],
     )
 
     results.box_plot(
