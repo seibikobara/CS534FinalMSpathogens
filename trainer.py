@@ -43,7 +43,7 @@ class Trainer:
         self.base_results = {}
         self.smote_results = {}
 
-    def fit(self, drug: str, model: T) -> Tuple[T, T]:
+    def fit(self, drug: str, model: T, **kwargs) -> Tuple[T, T]:
         """
         Fit the model to the specified drug dataset
 
@@ -64,10 +64,10 @@ class Trainer:
         )
 
         print('Training w/o SMOTE...')
-        base_model, base_res = self._train_and_eval(X, y, model, False)
+        base_model, base_res = self._train_and_eval(X, y, model, False, **kwargs)
         self.base_results[drug] = base_res
         print('Training w/ SMOTE...')
-        smote_model, smote_res = self._train_and_eval(X, y, model, True)
+        smote_model, smote_res = self._train_and_eval(X, y, model, True, **kwargs)
         self.smote_results[drug] = smote_res
 
         return base_model, smote_model
@@ -88,6 +88,7 @@ class Trainer:
             y: np.ndarray,
             model: T,
             use_smote=False,
+            **kwargs,
     ) -> Tuple[T, pd.DataFrame]:
         """
         Train and evaluate the model
@@ -121,7 +122,7 @@ class Trainer:
             if use_smote:
                 X_train, y_train = SMOTE().fit_resample(X_train, y_train)
 
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train, **kwargs)
             y_pred = model.predict(X_test)
 
             auc = roc_auc_score(y_test, y_pred)
