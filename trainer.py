@@ -5,10 +5,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 from copy import deepcopy
 from utils import load_data, EvaluationResults
-from typing import Dict, List, Tuple, Any, TypeVar
-
-
-T = TypeVar('T')
+from typing import Dict, List, Tuple, Any
 
 
 class Trainer:
@@ -46,11 +43,11 @@ class Trainer:
     def fit(
             self,
             drug: str,
-            model: T,
+            model: Any,
             X: np.ndarray = None,
             y: np.ndarray = None,
             **kwargs,
-    ) -> Tuple[T, T]:
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Fit the model to the specified drug dataset
 
@@ -61,7 +58,7 @@ class Trainer:
             y: output labels, DRIAMS dataset will be used if unspecified
 
         Returns:
-            (fitted model w/o SMOTE, fitted model w/ SMOTE)
+            (base results, SMOTE results)
         """
         print(f'Loading {drug}...')
 
@@ -74,13 +71,13 @@ class Trainer:
             )
 
         print('Training w/o SMOTE...')
-        base_model, base_res = self._train_and_eval(X, y, model, False, **kwargs)
+        base_res = self._train_and_eval(X, y, model, False, **kwargs)
         self.base_results[drug] = base_res
         print('Training w/ SMOTE...')
-        smote_model, smote_res = self._train_and_eval(X, y, model, True, **kwargs)
+        smote_res = self._train_and_eval(X, y, model, True, **kwargs)
         self.smote_results[drug] = smote_res
 
-        return base_model, smote_model
+        return base_res, smote_res
 
     def collect_results(self) -> EvaluationResults:
         """
@@ -96,17 +93,17 @@ class Trainer:
             self,
             X: np.ndarray,
             y: np.ndarray,
-            model: T,
+            model: Any,
             use_smote=False,
             **kwargs,
-    ) -> Tuple[T, pd.DataFrame]:
+    ) -> pd.DataFrame:
         """
         Train and evaluate the model
 
         Args:
             X: input data
             y: output labels
-            model: model to train
+            model: model to train, or the build function returns a model
             use_smote: whether to use SMOTE for oversampling
 
         Returns: the result data frame
@@ -116,9 +113,6 @@ class Trainer:
             'Accuracy': [],
             'F1 Score': [],
         }
-
-        # clone the model to avoid polluting it
-        model = deepcopy(model)
 
         skf = StratifiedKFold(n_splits=self.n_splits, shuffle=True)
         i = 0
@@ -132,8 +126,11 @@ class Trainer:
             if use_smote:
                 X_train, y_train = SMOTE().fit_resample(X_train, y_train)
 
-            model.fit(X_train, y_train, **kwargs)
-            y_pred = model.predict(X_test).flatten()
+            # clone/rebuild the model to avoid polluting it
+            m = model(X_train, y_train) if callable(model) else deepcopy(model)
+
+            m.fit(X_train, y_train, **kwargs)
+            y_pred = m.predict(X_test).flatten()
 
             # ensure compatibility with keras
             y_pred[y_pred <= 0.5] = 0
@@ -147,5 +144,5 @@ class Trainer:
             results['F1 Score'].append(f1)
             print(f'AUC={auc}, ACC={acc}, f1={f1}')
 
-        return model, pd.DataFrame(results)
+        return pd.DataFrame(results)
 
