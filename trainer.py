@@ -24,8 +24,8 @@ class Trainer:
             self,
             pathogen: str,
             n_splits: int,
-            sites: List[str],
-            years: List[int],
+            sites: List[str] = None,
+            years: List[int] = None,
     ):
         """
         Init Trainer
@@ -43,25 +43,35 @@ class Trainer:
         self.base_results = {}
         self.smote_results = {}
 
-    def fit(self, drug: str, model: T, **kwargs) -> Tuple[T, T]:
+    def fit(
+            self,
+            drug: str,
+            model: T,
+            X: np.ndarray = None,
+            y: np.ndarray = None,
+            **kwargs,
+    ) -> Tuple[T, T]:
         """
         Fit the model to the specified drug dataset
 
         Args:
             drug: name of the drug
             model: model to fit
+            X: input features, DRIAMS dataset will be used if unspecified
+            y: output labels, DRIAMS dataset will be used if unspecified
 
         Returns:
             (fitted model w/o SMOTE, fitted model w/ SMOTE)
         """
         print(f'Loading {drug}...')
 
-        X, y = load_data(
-            pathogen=self.pathogen,
-            drug=drug,
-            sites=self.sites,
-            years=self.years,
-        )
+        if X is None or y is None:
+            X, y = load_data(
+                pathogen=self.pathogen,
+                drug=drug,
+                sites=self.sites,
+                years=self.years,
+            )
 
         print('Training w/o SMOTE...')
         base_model, base_res = self._train_and_eval(X, y, model, False, **kwargs)
