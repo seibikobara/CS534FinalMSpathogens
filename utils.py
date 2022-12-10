@@ -1,4 +1,5 @@
 import os
+import hashlib
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -289,6 +290,20 @@ def load_data(
     Returns:
         X, y
     """
+    cache_dir = './.cache'
+    cache_key = f'{pathogen}/{drug}/{sites}/{years}'
+    hash = hashlib.md5(cache_key.encode()).hexdigest()
+    cache_file = f'{cache_dir}/{hash}.npy'
+
+    os.makedirs(cache_dir, exist_ok=True)
+
+    if os.path.exists(cache_file):
+        cache = np.load(cache_file)
+        X = cache[:, :-1]
+        y = cache[:, -1].astype(int)
+
+        return X, y
+
     X = []
     y = []
 
@@ -316,8 +331,14 @@ def load_data(
             labels[labels == 'R'] = 1
             y.append(labels.to_numpy(dtype=int))
 
-    return np.concatenate(X), np.concatenate(y)
+    X = np.concatenate(X)
+    y = np.concatenate(y)
 
+    cache = np.concatenate((X, y.reshape(-1, 1)), axis=1)
+
+    np.save(cache_file, cache)
+
+    return X, y
 
 # tests
 if __name__ == '__main__':
