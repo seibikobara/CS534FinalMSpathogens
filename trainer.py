@@ -123,7 +123,11 @@ class Trainer:
                 X_train, y_train = SMOTE().fit_resample(X_train, y_train)
 
             model.fit(X_train, y_train, **kwargs)
-            y_pred = model.predict(X_test)
+            y_pred = model.predict(X_test).flatten()
+
+            # ensure compatibility with keras
+            y_pred[y_pred <= 0.5] = 0
+            y_pred[y_pred > 0.5] = 1
 
             auc = roc_auc_score(y_test, y_pred)
             acc = accuracy_score(y_test, y_pred)
