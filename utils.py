@@ -340,6 +340,40 @@ def load_data(
 
     return X, y
 
+
+def load_results(path: str) -> EvaluationResults:
+    """
+    Load evaluation results from the given path
+
+    Args:
+        path: the path to results directory
+
+    Returns:
+        EvaluationResults
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(f'{path} not found')
+
+    base_results = {}
+    smote_results = {}
+
+    for file in os.listdir(path):
+        if file[-4:] != '.csv':
+            continue
+
+        df = pd.read_csv(f'{path}/{file}', index_col=0)
+        drug, res_type = file.replace('.csv', '').split('_')
+
+        if res_type == 'base':
+            base_results[drug] = df
+        elif res_type == 'smote':
+            smote_results[drug] = df
+        else:
+            raise ValueError(f'Unknown csv file {path}/{file}')
+
+    return EvaluationResults(base_results, smote_results)
+
+
 # tests
 if __name__ == '__main__':
     def generate_results(smote=False):
